@@ -1,22 +1,48 @@
 from socket import socket, AF_INET, SOCK_STREAM, SOL_SOCKET, SO_REUSEADDR
 import logging
+from threading import Thread
+import sys
 
 class ChatServer:
     def __init__(self, host, port) -> None:
         self.logger = self._setup_logger()
         self.socket = self._setup_socket(host, port)
-
+        self.connections = []
 
     def run(self):
         self.logger.info('Chat server is running')
 
         while True:
-            # accept will wait for incoming connections
+            # accept will block and wait for incoming connections
             # returns a tuple containing a new socket object
             # with the connection and address of the client on the other end
             conn, addr = self.socket.accept()
-            self.logger.debug(f'New connection: {addr}')
 
+            self.logger.debug(f'New connection: {addr}')
+            self.connections.append(conn)
+            self.logger.debug(f'Connections: {self.connections}')
+
+            # upon succefully accepting a connection
+            # create a new thread to relay any message from this client
+            # to the other clients connected to the server
+            thread = Thread(target=self.relay_messages, args=(conn, addr))
+            thread.daemon = True
+            thread.start()
+
+    def relay_messages(self, conn, addr):
+        try:
+            while True:
+                # blocking call, wait to receive messages
+                # breaks if client terminated for any reason 
+                # otherwise relays message to all other clients
+                data = conn.recv(4096)
+                for connection in self.connections:
+                    connection.send(data)
+        except ConnectionResetError:
+            self.logger.warning('Socket terminated. Exiting.')
+            self.connections.remove(conn)
+            sys.exit()
+            
 
     def _setup_socket(self, host, port):
         sock = socket(AF_INET, SOCK_STREAM)
