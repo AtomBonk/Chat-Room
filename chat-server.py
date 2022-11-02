@@ -1,14 +1,38 @@
-import socket
-import select
-import sys
+from socket import socket, AF_INET, SOCK_STREAM, SOL_SOCKET, SO_REUSEADDR
+import logging
 
-from _thread import *
+class ChatServer:
+    def __init__(self, host, port) -> None:
+        self.logger = self._setup_logger()
+        self.socket = self._setup_socket(host, port)
 
-server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-server.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+
+    def run(self):
+        self.logger.info('Chat server is running')
+
+        while True:
+            # accept will wait for incoming connections
+            # returns a tuple containing a new socket object
+            # with the connection and address of the client on the other end
+            conn, addr = self.socket.accept()
+            self.logger.debug(f'New connection: {addr}')
 
 
-if len(sys.argv) != 3:
-    print("\nIncorrect usage! You need to call the script like this:")
-    print("SCRIPT_NAME.py IP_ADDRESS PORT_NUM")
-    exit()
+    def _setup_socket(self, host, port):
+        sock = socket(AF_INET, SOCK_STREAM)
+        sock.setsockopt(SOL_SOCKET, SO_REUSEADDR, 1)
+        sock.bind((host, port))
+        sock.listen()
+        return sock
+
+
+    def _setup_logger(self):
+        logger = logging.getLogger('chat_server')
+        logger.addHandler(logging.StreamHandler())
+        logger.setLevel(logging.DEBUG)
+        return logger
+
+if __name__ == "__main__":
+    server = ChatServer('127.0.0.1', 4333)
+    server.run()
+    
