@@ -2,6 +2,7 @@ from socket import socket, AF_INET, SOCK_STREAM, SOL_SOCKET, SO_REUSEADDR, SHUT_
 import logging
 from threading import Thread
 import sys
+import datetime 
 
 class ChatServer:
     def __init__(self, host, port) -> None:
@@ -36,12 +37,14 @@ class ChatServer:
     def relay_messages(self, conn, addr):
         try:
             while True:
-                # blocking call, wait to receive messages
+                # blocking call, waits to receive messages
                 # breaks if client terminated for any reason 
-                # otherwise relays message to all other clients
+                # otherwise relays message to all connected clients
                 data = conn.recv(4096)
                 for connection in self.connections:
-                    connection.send(data)
+                    addr_prefix = ("<" + addr[0] + ":" + str(addr[1]) + ">").encode('utf-8')
+                    now_prefix = (" <" + datetime.datetime.now().strftime("%D %T") + "> ").encode('utf-8')
+                    connection.send(addr_prefix + now_prefix + data)  
         except ConnectionResetError:
             self.logger.warning('Socket terminated. Removing session.')
             self.connections.remove(conn)
