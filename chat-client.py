@@ -19,7 +19,7 @@ class ChatClient:
         try:
             while True:
                 data = self.socket.recv(4096)
-                self.logger.info(data.decode())
+                self.logger.info(data.decode(errors='replace'))
         except ConnectionResetError:
             self.logger.warning('Server terminated. Exiting.')
             sys.exit()
@@ -30,7 +30,7 @@ class ChatClient:
         try:
             while True:
                 user_message = input()
-                self.socket.send(user_message.encode('utf-8', errors='backslashreplace'))
+                self.socket.send(user_message.encode('utf-8', errors='replace'))
         except (KeyboardInterrupt, EOFError):
             self.socket.close()
             sys.exit()

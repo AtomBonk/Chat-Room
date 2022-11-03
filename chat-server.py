@@ -66,6 +66,6 @@ class ChatServer:
         return logger
 
 if __name__ == "__main__":
-    server = ChatServer('127.0.0.1', 4333)
+    server = ChatServer('0.0.0.0', 4333)
     server.run()
     
