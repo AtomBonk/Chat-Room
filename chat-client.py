@@ -39,7 +39,11 @@ class ChatClient:
 
     def _setup_socket(self, host, port):
         sock = socket(AF_INET, SOCK_STREAM)
-        sock.connect((host, port))
+        try:
+            sock.connect((host, port))
+        except ConnectionRefusedError:
+            self.logger.warning('No server available. Shutting down.')
+            sys.exit()
         return sock
 
 

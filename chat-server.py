@@ -2,6 +2,7 @@ from socket import socket, AF_INET, SOCK_STREAM, SOL_SOCKET, SO_REUSEADDR
 import logging
 from threading import Thread
 import sys
+import datetime 
 
 class ChatServer:
     def __init__(self, host, port) -> None:
@@ -13,33 +14,39 @@ class ChatServer:
         self.logger.info('Chat server is running')
 
         while True:
-            # accept will block and wait for incoming connections
-            # returns a tuple containing a new socket object
-            # with the connection and address of the client on the other end
-            conn, addr = self.socket.accept()
+                # accept will block and wait for incoming connections
+                # returns a tuple containing a new socket object
+                # with the connection and address of the client 
+                # on the other end
+            try:
+                conn, addr = self.socket.accept()
+                self.logger.debug(f'New connection: {addr}')
+                self.connections.append(conn)
+                self.logger.debug(f'Connections: {self.connections}')
 
-            self.logger.debug(f'New connection: {addr}')
-            self.connections.append(conn)
-            self.logger.debug(f'Connections: {self.connections}')
-
-            # upon succefully accepting a connection
-            # create a new thread to relay any message from this client
-            # to the other clients connected to the server
-            thread = Thread(target=self.relay_messages, args=(conn, addr))
-            thread.daemon = True
-            thread.start()
+                # upon succefully accepting a connection
+                # create a new thread to relay any message from this
+                # client to the other clients connected to the server
+                thread = Thread(target=self.relay_messages, args=(conn, addr))
+                thread.daemon = True
+                thread.start()
+            except KeyboardInterrupt:
+                self.logger.warning('Keyboard interrupt. Server shutting down.')
+                sys.exit()
 
     def relay_messages(self, conn, addr):
         try:
             while True:
-                # blocking call, wait to receive messages
+                # blocking call, waits to receive messages
                 # breaks if client terminated for any reason 
-                # otherwise relays message to all other clients
+                # otherwise relays message to all connected clients
                 data = conn.recv(4096)
                 for connection in self.connections:
-                    connection.send(data)
+                    addr_prefix = ("<" + addr[0] + ":" + str(addr[1]) + ">").encode('utf-8')
+                    now_prefix = (" <" + datetime.datetime.now().strftime("%D %T") + "> ").encode('utf-8')
+                    connection.send(addr_prefix + now_prefix + data)  
         except ConnectionResetError:
-            self.logger.warning('Socket terminated. Exiting.')
+            self.logger.warning('Socket terminated. Removing session.')
             self.connections.remove(conn)
             sys.exit()
             
