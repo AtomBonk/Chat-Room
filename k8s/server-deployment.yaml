@@ -1,0 +1,34 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: chat-server-deployment
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: chat-server
+  template:
+    metadata:
+      labels:
+        app: chat-server
+    spec:
+      containers:
+      - name: chat-server
+        image: atombonk/chat-server
+        resources:
+          limits:
+            memory: "128Mi"
+            cpu: "500m"
+        ports:
+        - containerPort: 4333
+        env:
+        - name: PGUSER
+          value: postgres
+        - name: PGHOST
+          value: postgres-cluster-ip
+        - name: PGPORT
+          value: '5432'
+        - name: PGDATABASE
+          value: postgres
+        - name: PGPASSWORD
+          value: pgpassword

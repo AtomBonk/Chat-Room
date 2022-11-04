@@ -55,5 +55,5 @@ class ChatClient:
 
 
 if __name__ == "__main__":
-    client = ChatClient('127.0.0.1', 4333)
+    client = ChatClient('127.0.0.1', 52047)
     

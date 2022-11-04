@@ -1,0 +1,38 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: postgres-deployment
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: postgres-deployment
+  template:
+    metadata:
+      labels:
+        app: postgres-deployment
+    spec:
+      volumes:
+        - name: postgres-storage
+          persistentVolumeClaim:
+            claimName: postgres-pvc
+      containers:
+      - name: postgres
+        image: postgres
+        volumeMounts:
+            - mountPath: /var/lib/postgresql/data
+              name: postgres-storage
+              subPath: postgres:15-alpine
+        resources:
+          limits:
+            memory: "128Mi"
+            cpu: "500m"
+        ports:
+        - containerPort: 5432
+        env:
+            - name: POSTGRES_PASSWORD
+              value: pgpassword
+            - name: PGPASSWORD
+              value: pgpassword
+            - name: PGUSER
+              value: postgres
